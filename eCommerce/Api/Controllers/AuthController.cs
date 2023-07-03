@@ -12,7 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace eCommerce.Controllers
+namespace eCommerce.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -21,7 +21,7 @@ namespace eCommerce.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
-        private readonly AppDbContext _context;
+        //private readonly AppDbContext _context;
         private readonly IAuth _auth;
 
         public AuthController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, AppDbContext context, IAuth auth)
@@ -29,10 +29,10 @@ namespace eCommerce.Controllers
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
-            _context = context;
+            //_context = context;
             _auth = auth;
         }
-        
+
         #region Register
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace eCommerce.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("registerAdmin")]
-        [Authorize(Roles =Roles.Admin)]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> RegisterAdmin([FromBody] SignUpDto model)
         {
             //check username exists
@@ -89,7 +89,7 @@ namespace eCommerce.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("registerEditor")]
-        [Authorize(Roles=Roles.Admin)]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> RegisterEditor([FromBody] SignUpDto model)
         {
             //check username exists
@@ -114,7 +114,6 @@ namespace eCommerce.Controllers
         [Route("signin")]
         public async Task<IActionResult> SignIn([FromBody] SignInDto model)
         {
-            
             var user = await _userManager.FindByNameAsync(model.Username);
 
             if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
@@ -147,7 +146,7 @@ namespace eCommerce.Controllers
             return Unauthorized();
         }
 
-        
+
         private JwtSecurityToken GetToken(List<Claim> authClaims)
         {
             var authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JwtConfiguration:TokenSecret"]));
@@ -190,7 +189,7 @@ namespace eCommerce.Controllers
         public async Task<ActionResult<IEnumerable<AppUserDto>>> GetUsers()
         {
             var users = await _auth.GetUsers();
-            
+
             if (users != null)
             {
                 return Ok(users);

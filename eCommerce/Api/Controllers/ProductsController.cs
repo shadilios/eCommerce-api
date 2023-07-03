@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using eCommerce.Core.Entities;
+using eCommerce.Data;
+using eCommerce.Data.Roles;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using eCommerce.Data;
-using eCommerce.Models;
-using Microsoft.AspNetCore.Authorization;
-using eCommerce.Data.Roles;
 
-namespace eCommerce.Controllers
+namespace eCommerce.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -27,10 +22,10 @@ namespace eCommerce.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-          if (_context.Products == null)
-          {
-              return NotFound();
-          }
+            if (_context.Products == null)
+            {
+                return NotFound();
+            }
             return await _context.Products.ToListAsync();
         }
 
@@ -38,10 +33,10 @@ namespace eCommerce.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
-          if (_context.Products == null)
-          {
-              return NotFound();
-          }
+            if (_context.Products == null)
+            {
+                return NotFound();
+            }
             var product = await _context.Products.FindAsync(id);
 
             if (product == null)
@@ -53,22 +48,22 @@ namespace eCommerce.Controllers
         }
 
         // GET: api/Products/Category/5
-        [HttpGet("catId/{catId}")]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProductsByCategory(int id)
+        [HttpGet("category/{catId}")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProductsByCategory(int catId)
         {
             if (_context.Products == null)
             {
                 return NotFound();
             }
             return await _context.Products
-                .Where(x => x.CategoryId == id)
+                .Where(x => x.CategoryId == catId)
                 .ToListAsync();
         }
 
         // PUT: api/Products/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        [Authorize(Roles =Roles.Admin + "," + Roles.Editor)]
+        [Authorize(Roles = Roles.Admin + "," + Roles.Editor)]
         public async Task<IActionResult> PutProduct(int id, Product product)
         {
             if (id != product.Id)
@@ -100,13 +95,13 @@ namespace eCommerce.Controllers
         // POST: api/Products
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize(Roles = Roles.Admin + "," + Roles.Editor)]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-          if (_context.Products == null)
-          {
-              return Problem("Entity set 'AppDbContext.Products'  is null.");
-          }
+            if (_context.Products == null)
+            {
+                return Problem("Entity set 'AppDbContext.Products'  is null.");
+            }
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
@@ -115,7 +110,7 @@ namespace eCommerce.Controllers
 
         // DELETE: api/Products/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = Roles.Admin + "," + Roles.Editor)]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             if (_context.Products == null)

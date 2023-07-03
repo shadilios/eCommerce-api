@@ -1,19 +1,20 @@
+using eCommerce.Core.Interfaces;
 using eCommerce.Data;
 using eCommerce.Data.Auth;
 using eCommerce.Services.AuthService;
+using eCommerce.Services.CategoriesService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 using System.Text;
 
 namespace eCommerce
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -54,7 +55,7 @@ namespace eCommerce
             new List<string>()
           }
         });
-                
+
             }
             );
 
@@ -68,19 +69,18 @@ namespace eCommerce
             var secretKey = builder.Configuration.GetValue<string>("SecretKey");
             var configuration = builder.Configuration;
 
-            // ! Dependency Injection
-            builder.Services.AddTransient<IAuth, AuthService>();
+
 
             // ! For Identity // SHOULD COME FIRST
             builder.Services.AddIdentity<AppUser, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-            
+
 
             // Adding Authentication
             builder.Services.AddAuthentication(options =>
             {
-                // ! THIS FUCKING ERROR FUCKING NIGGER CUNT SHIT
+                // ! THIS FUCKING ERROR FUCKING SHIT
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 //options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -106,9 +106,19 @@ namespace eCommerce
             });
 
 
+            //transient: light and not multi instances
+            //scoped: not light and scoped to http request
 
             // ! Add Authorization
             builder.Services.AddAuthorization();
+
+            // ! Dependency Injection
+            builder.Services.AddTransient<IAuth, AuthService>();
+            //builder.Services.AddScoped<ICategories, CategoriesService>();
+            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            //Auto mapper
+            builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 
             // ! Data Base
@@ -135,6 +145,25 @@ namespace eCommerce
             app.UseHttpsRedirection();
 
             app.MapControllers();
+
+            #region Apply migrations, create DB on app start & seed data
+            using var scope = app.Services.CreateScope();
+            var servies = scope.ServiceProvider;
+            var context = servies.GetRequiredService<AppDbContext>();
+            var logger = servies.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                await context.Database.MigrateAsync();
+                await ContextSeed.SeedAsync(context);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error ocurred during migrations");
+            }
+            #endregion
+
+
 
             app.Run();
         }
